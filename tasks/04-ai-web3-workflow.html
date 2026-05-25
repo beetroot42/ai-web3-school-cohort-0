@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI × Web3 最小工作流</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --ai: #6366f1;
+    --ai-glow: rgba(99,102,241,0.3);
+    --human: #10b981;
+    --human-glow: rgba(16,185,129,0.3);
+    --wallet: #f59e0b;
+    --wallet-glow: rgba(245,158,11,0.3);
+    --chain: #3b82f6;
+    --chain-glow: rgba(59,130,246,0.3);
+    --verify: #8b5cf6;
+    --verify-glow: rgba(139,92,246,0.3);
+    --risk: #ef4444;
+    --risk-glow: rgba(239,68,68,0.2);
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --arrow: #334155;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    position: relative;
+  }
+
+  header h1 {
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, #a5b4fc, #6366f1, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 12px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 0 24px 32px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* Flow container */
+  .flow {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Initiator */
+  .initiator {
+    background: linear-gradient(135deg, var(--surface2), #1e2a3a);
+    border: 2px solid #334155;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    gap: 4px;
+    box-shadow: 0 0 30px rgba(99,102,241,0.15);
+  }
+
+  .initiator span { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; }
+
+  /* Arrow */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+  }
+
+  .arrow-line {
+    width: 2px;
+    height: 32px;
+    background: linear-gradient(180deg, var(--arrow), #4a5568);
+  }
+
+  .arrow-head {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #4a5568;
+  }
+
+  .arrow-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+
+  /* Layer */
+  .layer {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .layer-header {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .layer-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Layer colors */
+  .layer-ai { border-color: var(--ai); }
+  .layer-ai .layer-header { background: rgba(99,102,241,0.12); color: #a5b4fc; }
+  .layer-human { border-color: var(--human); }
+  .layer-human .layer-header { background: rgba(16,185,129,0.12); color: #6ee7b7; }
+  .layer-wallet { border-color: var(--wallet); }
+  .layer-wallet .layer-header { background: rgba(245,158,11,0.12); color: #fcd34d; }
+  .layer-chain { border-color: var(--chain); }
+  .layer-chain .layer-header { background: rgba(59,130,246,0.12); color: #93c5fd; }
+  .layer-verify { border-color: var(--verify); }
+  .layer-verify .layer-header { background: rgba(139,92,246,0.12); color: #c4b5fd; }
+
+  /* Step card */
+  .step {
+    flex: 1;
+    min-width: 160px;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: default;
+  }
+
+  .step:hover {
+    transform: translateY(-2px);
+  }
+
+  .step-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  .step-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+  .step-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; }
+
+  .step-ai { border-left: 3px solid var(--ai); }
+  .step-ai:hover { box-shadow: -2px 0 16px var(--ai-glow); }
+  .step-human { border-left: 3px solid var(--human); }
+  .step-human:hover { box-shadow: -2px 0 16px var(--human-glow); }
+  .step-wallet { border-left: 3px solid var(--wallet); }
+  .step-wallet:hover { box-shadow: -2px 0 16px var(--wallet-glow); }
+  .step-chain { border-left: 3px solid var(--chain); }
+  .step-chain:hover { box-shadow: -2px 0 16px var(--chain-glow); }
+  .step-verify { border-left: 3px solid var(--verify); }
+  .step-verify:hover { box-shadow: -2px 0 16px var(--verify-glow); }
+
+  .mandatory-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: var(--human);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .sign-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: var(--wallet);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* Risk section */
+  .risks {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .risks h3 {
+    font-size: 0.85rem;
+    color: var(--risk);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .risk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+  }
+
+  .risk-card {
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+
+  .risk-title { font-size: 0.8rem; font-weight: 600; color: #fca5a5; margin-bottom: 4px; }
+  .risk-desc { font-size: 0.73rem; color: var(--text-muted); line-height: 1.5; }
+
+  /* Summary */
+  .summary {
+    max-width: 900px;
+    margin: 0 auto 60px;
+    padding: 0 24px;
+  }
+
+  .summary h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #a5b4fc;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: border-color 0.2s;
+  }
+
+  .summary-card:hover { border-color: #334155; }
+  .summary-num { font-size: 1.4rem; font-weight: 700; color: #6366f1; margin-bottom: 4px; }
+  .summary-q { font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .summary-a { font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; }
+
+  .flow-arrow-split {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 60px;
+    padding: 4px 0;
+    width: 100%;
+  }
+
+  .branch { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .branch-label { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+  .branch-ok { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+  .branch-fail { background: rgba(239,68,68,0.2); color: #fca5a5; }
+  .branch-line { width: 2px; height: 24px; background: #334155; }
+  .branch-head { width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #4a5568; }
+
+  .decision-box {
+    background: var(--surface2);
+    border: 2px solid var(--human);
+    border-radius: 8px;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6ee7b7;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 0 20px var(--human-glow);
+  }
+  .decision-box small { display: block; color: var(--text-muted); font-size: 0.72rem; margin-top: 4px; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 AI × Web3 最小工作流</h1>
+  <p>AI Agent 辅助合约交互 · 链上边界清晰划定</p>
+  <div class="badge">beetroot42 · AI × Web3 School · Task 04</div>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#6366f1"></div> AI / Agent 自动</div>
+  <div class="legend-item"><div class="dot" style="background:#10b981"></div> 必须人工确认</div>
+  <div class="legend-item"><div class="dot" style="background:#f59e0b"></div> 钱包签名</div>
+  <div class="legend-item"><div class="dot" style="background:#3b82f6"></div> 链上执行</div>
+  <div class="legend-item"><div class="dot" style="background:#8b5cf6"></div> 结果验证</div>
+  <div class="legend-item"><div class="dot" style="background:#ef4444"></div> 风险点</div>
+</div>
+
+<div class="flow">
+
+  <!-- Initiator -->
+  <div class="initiator">
+    👤
+    <span>用户发起</span>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">描述意图（自然语言）</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- AI Layer -->
+  <div class="layer layer-ai">
+    <div class="layer-header">🤖 AI / Agent 层（链下）</div>
+    <div class="layer-body">
+      <div class="step step-ai">
+        <div class="step-icon">🧠</div>
+        <div class="step-title">意图解析 & 参数生成</div>
+        <div class="step-desc">解析自然语言，生成合约地址、函数名、调用参数草稿</div>
+      </div>
+      <div class="step step-ai">
+        <div class="step-icon">🔎</div>
+        <div class="step-title">风险预检</div>
+        <div class="step-desc">校验合约地址格式、比对已知漏洞库、评估金额范围</div>
+      </div>
+      <div class="step step-ai">
+        <div class="step-icon">📋</div>
+        <div class="step-title">生成人类可读摘要</div>
+        <div class="step-desc">将技术参数转为用户易懂的操作说明，供人工复核</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- Human Review -->
+  <div class="layer layer-human">
+    <div class="layer-header">🧑 人工确认层（链下）</div>
+    <div class="layer-body">
+      <div class="step step-human" style="flex:1;min-width:100%">
+        <div class="mandatory-badge">必须人工</div>
+        <div class="step-icon">⚠️</div>
+        <div class="step-title">内容复核</div>
+        <div class="step-desc">核查：合约地址是否正确？调用函数是否匹配？金额/参数是否在预期范围？Gas 上限是否合理？</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Branch after human review -->
+  <div class="flow-arrow-split">
+    <div class="branch">
+      <div class="branch-label branch-fail">❌ 不对 → 修改</div>
+      <div class="branch-line"></div>
+      <div style="font-size:0.7rem;color:#fca5a5">返回用户重新描述</div>
+    </div>
+    <div class="branch">
+      <div class="branch-label branch-ok">✅ 确认无误</div>
+      <div class="branch-line"></div>
+      <div class="branch-head"></div>
+    </div>
+  </div>
+
+  <!-- Wallet Layer -->
+  <div class="layer layer-wallet">
+    <div class="layer-header">🔐 钱包签名层</div>
+    <div class="layer-body">
+      <div class="step step-wallet">
+        <div class="step-icon">💬</div>
+        <div class="step-title">钱包弹窗</div>
+        <div class="step-desc">展示完整交易详情：To地址、Value、Data、Gas</div>
+      </div>
+      <div class="step step-wallet">
+        <div class="sign-badge">🔑 签名</div>
+        <div class="step-icon">✍️</div>
+        <div class="step-title">用户签名授权</div>
+        <div class="step-desc">私钥 / 硬件钱包确认。<strong>AI 无法代替此步骤</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- Chain Layer -->
+  <div class="layer layer-chain">
+    <div class="layer-header">⛓️ 链上执行层</div>
+    <div class="layer-body">
+      <div class="step step-chain">
+        <div class="step-icon">📡</div>
+        <div class="step-title">广播交易</div>
+        <div class="step-desc">发送到测试网 / 主网节点</div>
+      </div>
+      <div class="step step-chain">
+        <div class="step-icon">⛏️</div>
+        <div class="step-title">验证者打包</div>
+        <div class="step-desc">等待区块确认（测试网通常12秒）</div>
+      </div>
+      <div class="step step-chain">
+        <div class="step-icon">⚙️</div>
+        <div class="step-title">合约执行</div>
+        <div class="step-desc">EVM 执行函数调用，状态变更上链（不可逆）</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- Verify Layer -->
+  <div class="layer layer-verify">
+    <div class="layer-header">🔍 验证层</div>
+    <div class="layer-body">
+      <div class="step step-verify">
+        <div class="step-icon">🌐</div>
+        <div class="step-title">区块浏览器查询</div>
+        <div class="step-desc">用 TxHash 在 Etherscan 确认 Status: Success</div>
+      </div>
+      <div class="step step-verify">
+        <div class="step-icon">📊</div>
+        <div class="step-title">事件日志解析</div>
+        <div class="step-desc">检查 Event Logs，参数是否与预期一致（AI 辅助解读）</div>
+      </div>
+      <div class="step step-verify">
+        <div class="mandatory-badge">必须人工</div>
+        <div class="step-icon">✅</div>
+        <div class="step-title">最终结果确认</div>
+        <div class="step-desc">人工判断：链上状态是否符合业务预期？</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risks -->
+  <div class="risks">
+    <h3>🔴 主要风险点</h3>
+    <div class="risk-grid">
+      <div class="risk-card">
+        <div class="risk-title">⚡ AI 幻觉参数</div>
+        <div class="risk-desc">AI 可能生成错误的合约地址、函数签名或金额。人工复核是第一道防线。</div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-title">⚡ 人工疏忽确认</div>
+        <div class="risk-desc">用户未仔细阅读摘要直接点确认，盲信 AI 输出，尤其在金额较大时致命。</div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-title">⚡ 钓鱼签名</div>
+        <div class="risk-desc">恶意网站伪装成正常钱包弹窗，诱导签署授权超范围的操作（approve 无限额）。</div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-title">⚡ 合约漏洞</div>
+        <div class="risk-desc">目标合约存在重入攻击等漏洞，AI 预检无法覆盖所有情况，需参考审计报告。</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Summary -->
+<div class="summary">
+  <h2>📝 五句话总结</h2>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-num">01</div>
+      <div class="summary-q">这个流程解决什么问题？</div>
+      <div class="summary-a">在 AI 生成操作和链上不可逆执行之间建立强制人工确认点，防止 AI 错误或恶意输出直接造成资产损失，明确划定 AI 辅助与人工授权的边界。</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num">02</div>
+      <div class="summary-q">哪些步骤由 AI / Agent 辅助？</div>
+      <div class="summary-a">意图解析、合约参数生成、风险预检（地址格式、漏洞库比对）、人类可读摘要生成、TxHash 查询和事件日志解析——全部属于信息处理层，不涉及资产控制权。</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num">03</div>
+      <div class="summary-q">哪些步骤必须人工确认？</div>
+      <div class="summary-a">两个不可绕过的关卡：① 执行前内容复核（确认合约地址和参数正确）；② 钱包私钥签名（AI 物理上无法代签）。缺一不可，顺序不能颠倒。</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num">04</div>
+      <div class="summary-q">如何验证最终结果？</div>
+      <div class="summary-a">用 TxHash 在区块浏览器查询状态为 Success，检查 Event Logs 参数与预期一致，必要时调用合约 view 函数确认链上状态实际变更。</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num">05</div>
+      <div class="summary-q">主要风险点是什么？</div>
+      <div class="summary-a">AI 幻觉参数（错误地址/金额）、人工疏忽确认（盲信 AI）、钓鱼签名（恶意弹窗诱导授权）、合约漏洞（预检无法覆盖所有情况）。</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
