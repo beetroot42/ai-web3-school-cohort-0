@@ -1,0 +1,389 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>合约解读助手 | AI × Web3 School</title>
+<meta name="description" content="输入智能合约 ABI，用 AI 解释每个函数，并生成知识 Quiz。AI × Web3 School Task 06。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f1a;--panel:#131629;--card:#1a1d35;--border:#252847;
+  --accent:#7c6af5;--accent2:#4fc3f7;--text:#e8eaf6;--muted:#8b90b8;
+  --green:#4caf87;--red:#f56565;--yellow:#f6ad55;
+  --glow:0 0 20px rgba(124,106,245,.25);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+a{color:var(--accent2)}
+/* Header */
+header{background:linear-gradient(135deg,#1a1d35 0%,#131629 100%);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;gap:1rem}
+.logo{font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.badge{font-size:.7rem;background:rgba(124,106,245,.15);border:1px solid rgba(124,106,245,.3);color:var(--accent);padding:.2rem .6rem;border-radius:20px;font-weight:600;margin-left:auto}
+/* API bar */
+#api-bar{background:var(--panel);border-bottom:1px solid var(--border);padding:.8rem 2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+#api-bar label{font-size:.8rem;color:var(--muted);white-space:nowrap}
+#api-key{flex:1;min-width:220px;background:#0d0f1a;border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;transition:.2s}
+#api-key:focus{border-color:var(--accent);box-shadow:var(--glow)}
+.btn{cursor:pointer;border:none;border-radius:8px;padding:.45rem 1rem;font-size:.8rem;font-weight:600;transition:.2s;font-family:'Inter',sans-serif}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#6b5ce7);color:#fff}
+.btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.model-select{background:#0d0f1a;border:1px solid var(--border);border-radius:8px;padding:.45rem .6rem;color:var(--text);font-size:.8rem;outline:none}
+/* Layout */
+main{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 110px);overflow:hidden}
+/* Left panel */
+aside{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-header h2{font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+#abi-input-area{padding:.75rem;border-bottom:1px solid var(--border)}
+#abi-json{width:100%;height:90px;background:#0d0f1a;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:.5rem;resize:none;outline:none;transition:.2s}
+#abi-json:focus{border-color:var(--accent)}
+.abi-actions{display:flex;gap:.5rem;margin-top:.5rem}
+#fn-list{flex:1;overflow-y:auto;padding:.5rem}
+#fn-list::-webkit-scrollbar{width:4px}
+#fn-list::-webkit-scrollbar-track{background:transparent}
+#fn-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.fn-item{padding:.6rem .8rem;border-radius:8px;cursor:pointer;margin-bottom:.3rem;border:1px solid transparent;transition:.2s;display:flex;align-items:center;gap:.6rem}
+.fn-item:hover{background:var(--card);border-color:var(--border)}
+.fn-item.active{background:rgba(124,106,245,.1);border-color:var(--accent)}
+.fn-name{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:500}
+.fn-tag{font-size:.65rem;padding:.15rem .4rem;border-radius:4px;font-weight:600;text-transform:uppercase}
+.tag-write{background:rgba(246,173,85,.1);color:var(--yellow);border:1px solid rgba(246,173,85,.2)}
+.tag-read{background:rgba(76,195,135,.1);color:var(--green);border:1px solid rgba(76,195,135,.2)}
+.tag-event{background:rgba(79,195,247,.1);color:var(--accent2);border:1px solid rgba(79,195,247,.2)}
+.tag-ctor{background:rgba(124,106,245,.1);color:var(--accent);border:1px solid rgba(124,106,245,.2)}
+/* Right panel */
+section#right{background:var(--bg);overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem}
+section#right::-webkit-scrollbar{width:5px}
+section#right::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;transition:.2s}
+.card-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.card-title .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.fn-sig{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--accent2);padding:.6rem .9rem;background:#0d0f1a;border-radius:8px;margin-bottom:.9rem;word-break:break-all}
+.explain-text{font-size:.9rem;color:var(--text);line-height:1.75;white-space:pre-wrap}
+.loader{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{color:var(--red);font-size:.85rem;padding:.6rem;background:rgba(245,101,101,.08);border-radius:8px;border:1px solid rgba(245,101,101,.2)}
+/* Params table */
+.params-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.75rem}
+.params-table th{text-align:left;color:var(--muted);font-weight:600;padding:.4rem .6rem;border-bottom:1px solid var(--border)}
+.params-table td{padding:.4rem .6rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;border-bottom:1px solid rgba(37,40,71,.5)}
+/* Quiz */
+.quiz-q{margin-bottom:1rem}
+.quiz-q p{font-size:.9rem;margin-bottom:.6rem;font-weight:500}
+.quiz-opts{display:flex;flex-direction:column;gap:.4rem}
+.quiz-opt{padding:.55rem .9rem;background:#0d0f1a;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s;text-align:left;color:var(--text);font-family:'Inter',sans-serif}
+.quiz-opt:hover:not(:disabled){border-color:var(--accent);background:rgba(124,106,245,.08)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(76,195,135,.1);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(245,101,101,.08);color:var(--red)}
+.quiz-opt:disabled{cursor:default}
+.quiz-explain{font-size:.8rem;color:var(--muted);margin-top:.4rem;padding:.4rem .6rem;background:rgba(37,40,71,.5);border-radius:6px}
+.score-bar{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:#0d0f1a;border-radius:8px;font-size:.85rem}
+.score-num{font-size:1.6rem;font-weight:700;color:var(--accent)}
+/* Welcome */
+#welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:3rem;color:var(--muted)}
+#welcome h2{font-size:1.5rem;color:var(--text);margin-bottom:.5rem}
+#welcome p{max-width:360px;line-height:1.7;margin-bottom:1.5rem}
+.arrow{font-size:2rem;animation:bounce .8s ease-in-out infinite alternate}
+@keyframes bounce{to{transform:translateY(-6px)}}
+/* Footer */
+footer{grid-column:1/-1;background:var(--panel);border-top:1px solid var(--border);padding:.6rem 2rem;font-size:.72rem;color:var(--muted);display:flex;gap:1.5rem;flex-wrap:wrap}
+footer span{display:flex;align-items:center;gap:.4rem}
+footer .tag-ai{color:var(--accent2)}
+footer .tag-human{color:var(--green)}
+@media(max-width:700px){main{grid-template-columns:1fr;height:auto} aside{height:300px}}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">⟡ 合约解读助手</span>
+  <span style="font-size:.85rem;color:var(--muted)">Contract ABI Explainer + Quiz</span>
+  <span class="badge">Task 06 · AI × Web3 School</span>
+</header>
+<div id="api-bar">
+  <label for="api-key">🔑 OpenAI API Key</label>
+  <input id="api-key" type="password" placeholder="sk-..." autocomplete="off">
+  <select id="model-sel" class="model-select">
+    <option value="gpt-4o-mini">gpt-4o-mini</option>
+    <option value="gpt-4o">gpt-4o</option>
+    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+  </select>
+  <button class="btn btn-ghost" onclick="saveKey()">保存 Key</button>
+  <span id="key-status" style="font-size:.75rem;color:var(--muted)"></span>
+</div>
+<main>
+  <aside>
+    <div class="panel-header">
+      <h2>函数列表</h2>
+      <button class="btn btn-ghost" style="font-size:.7rem;padding:.25rem .6rem" onclick="genQuiz()">生成 Quiz ✨</button>
+    </div>
+    <div id="abi-input-area">
+      <textarea id="abi-json" placeholder="粘贴 ABI JSON 数组..."></textarea>
+      <div class="abi-actions">
+        <button class="btn btn-primary" style="flex:1" onclick="parseABI()">解析 ABI</button>
+        <button class="btn btn-ghost" onclick="loadSample()">示例合约</button>
+      </div>
+    </div>
+    <div id="fn-list"></div>
+  </aside>
+  <section id="right">
+    <div id="welcome">
+      <div class="arrow">←</div>
+      <h2>选择一个函数</h2>
+      <p>加载示例合约或粘贴 ABI，点击左侧函数获取 AI 解释。</p>
+      <button class="btn btn-primary" onclick="loadSample();parseABI()">▶ 加载 SimpleCounter 示例</button>
+    </div>
+  </section>
+</main>
+<footer>
+  <span>🤖 <span class="tag-ai">AI 生成</span>：函数解释文字、Quiz 题目与解析（GPT API）</span>
+  <span>✅ <span class="tag-human">人工验证</span>：SimpleCounter ABI、函数签名解析逻辑、UI 布局、答案核对</span>
+  <span style="margin-left:auto">beetroot42 · AI × Web3 School · 2026</span>
+</footer>
+<script>
+const SAMPLE_ABI = [
+  {"type":"constructor","inputs":[{"name":"_label","type":"string"}],"stateMutability":"nonpayable"},
+  {"type":"function","name":"increment","inputs":[],"outputs":[],"stateMutability":"nonpayable"},
+  {"type":"function","name":"reset","inputs":[],"outputs":[],"stateMutability":"nonpayable"},
+  {"type":"function","name":"setLabel","inputs":[{"name":"_newLabel","type":"string"}],"outputs":[],"stateMutability":"nonpayable"},
+  {"type":"function","name":"getState","inputs":[],"outputs":[{"name":"_count","type":"uint256"},{"name":"_owner","type":"address"},{"name":"_label","type":"string"}],"stateMutability":"view"},
+  {"type":"function","name":"count","inputs":[],"outputs":[{"name":"","type":"uint256"}],"stateMutability":"view"},
+  {"type":"function","name":"owner","inputs":[],"outputs":[{"name":"","type":"address"}],"stateMutability":"view"},
+  {"type":"function","name":"label","inputs":[],"outputs":[{"name":"","type":"string"}],"stateMutability":"view"},
+  {"type":"event","name":"Incremented","inputs":[{"name":"caller","type":"address","indexed":true},{"name":"newCount","type":"uint256","indexed":false}],"anonymous":false},
+  {"type":"event","name":"LabelUpdated","inputs":[{"name":"newLabel","type":"string","indexed":false}],"anonymous":false}
+];
+
+const SAMPLE_SOL = `// SimpleCounter.sol (Task 05 — beetroot42)
+// 部署网络: Sepolia Testnet
+// 功能: 最简计数器合约，演示状态变量/事件/权限控制
+
+contract SimpleCounter {
+    uint256 public count;   // 链上状态
+    address public owner;   // 部署者
+    string  public label;   // 自定义标签
+
+    event Incremented(address indexed caller, uint256 newCount);
+    event LabelUpdated(string newLabel);
+
+    constructor(string memory _label) { owner=msg.sender; label=_label; }
+    function increment() external { count+=1; emit Incremented(msg.sender,count); }
+    function reset() external { require(msg.sender==owner,"Only owner"); count=0; }
+    function setLabel(string memory _l) external { label=_l; emit LabelUpdated(_l); }
+    function getState() external view returns(uint256,address,string memory){ return(count,owner,label); }
+}`;
+
+let currentABI = [];
+let currentFn = null;
+let quizData = [];
+
+function saveKey(){
+  const k = document.getElementById('api-key').value.trim();
+  if(k){ sessionStorage.setItem('oai_key',k); document.getElementById('key-status').textContent='✓ 已保存（仅本次会话）'; }
+}
+function getKey(){ return sessionStorage.getItem('oai_key') || document.getElementById('api-key').value.trim(); }
+
+function loadSample(){
+  document.getElementById('abi-json').value = JSON.stringify(SAMPLE_ABI,null,2);
+}
+
+function fnTag(item){
+  if(item.type==='event') return 'event';
+  if(item.type==='constructor') return 'ctor';
+  const sm = item.stateMutability||'';
+  return (sm==='view'||sm==='pure') ? 'read' : 'write';
+}
+function tagLabel(t){ return {write:'Write ✍',read:'Read 👁',event:'Event 📡',ctor:'Constructor'}[t]||t; }
+
+function parseABI(){
+  try{
+    const raw = document.getElementById('abi-json').value.trim();
+    currentABI = JSON.parse(raw);
+    renderList();
+  }catch(e){ alert('ABI JSON 解析失败：'+e.message); }
+}
+
+function renderList(){
+  const el = document.getElementById('fn-list');
+  el.innerHTML='';
+  currentABI.forEach((item,i)=>{
+    if(!['function','event','constructor'].includes(item.type)) return;
+    const name = item.name || 'constructor';
+    const tag = fnTag(item);
+    const div = document.createElement('div');
+    div.className='fn-item';
+    div.id='fn-'+i;
+    div.innerHTML=`<span class="fn-tag tag-${tag}">${tagLabel(tag)}</span><span class="fn-name">${name}()</span>`;
+    div.onclick=()=>selectFn(item,i);
+    el.appendChild(div);
+  });
+}
+
+function selectFn(item,idx){
+  document.querySelectorAll('.fn-item').forEach(e=>e.classList.remove('active'));
+  const el = document.getElementById('fn-'+idx);
+  if(el) el.classList.add('active');
+  currentFn = item;
+  renderExplainPanel(item);
+}
+
+function buildSig(item){
+  if(item.type==='event') return `event ${item.name}(${(item.inputs||[]).map(p=>p.type+' '+p.name).join(', ')})`;
+  if(item.type==='constructor') return `constructor(${(item.inputs||[]).map(p=>p.type+' '+p.name).join(', ')})`;
+  const ins = (item.inputs||[]).map(p=>p.type+' '+p.name).join(', ');
+  const outs = (item.outputs||[]).map(p=>p.type+(p.name?' '+p.name:'')).join(', ');
+  const sm = item.stateMutability ? ` ${item.stateMutability}` : '';
+  return `function ${item.name}(${ins})${sm}${outs?' returns ('+outs+')':''}`;
+}
+
+function buildParamsTable(inputs,outputs){
+  if((!inputs||!inputs.length)&&(!outputs||!outputs.length)) return '';
+  let rows='';
+  (inputs||[]).forEach(p=>{ rows+=`<tr><td style="color:var(--accent2)">${p.name||'—'}</td><td>${p.type}</td><td style="color:var(--yellow)">input</td></tr>`; });
+  (outputs||[]).forEach(p=>{ rows+=`<tr><td style="color:var(--green)">${p.name||'(返回值)'}</td><td>${p.type}</td><td style="color:var(--green)">output</td></tr>`; });
+  return `<table class="params-table"><thead><tr><th>名称</th><th>类型</th><th>方向</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderExplainPanel(item){
+  const right = document.getElementById('right');
+  const sig = buildSig(item);
+  const tag = fnTag(item);
+  const paramsHtml = buildParamsTable(item.inputs,item.outputs);
+  right.innerHTML=`
+    <div class="card">
+      <div class="card-title"><div class="dot"></div>函数签名</div>
+      <div class="fn-sig">${sig}</div>
+      ${paramsHtml}
+    </div>
+    <div class="card" id="explain-card">
+      <div class="card-title"><div class="dot" style="background:var(--accent2)"></div>AI 解释 <span style="margin-left:auto;font-size:.7rem;color:var(--muted)">${document.getElementById('model-sel').value}</span></div>
+      <div id="explain-body"><span class="loader"></span>正在生成解释…</div>
+    </div>
+    <div class="card" id="quiz-card" style="display:none">
+      <div class="card-title"><div class="dot" style="background:var(--yellow)"></div>知识 Quiz</div>
+      <div id="quiz-body"></div>
+    </div>`;
+  explainFn(item);
+}
+
+async function callAI(messages){
+  const key = getKey();
+  if(!key) throw new Error('请先输入 OpenAI API Key');
+  const model = document.getElementById('model-sel').value;
+  const res = await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body: JSON.stringify({model, messages, temperature:0.7, max_tokens:800})
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.error?.message || res.statusText);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+async function explainFn(item){
+  const body = document.getElementById('explain-body');
+  try{
+    const sig = buildSig(item);
+    const prompt = `你是智能合约教学助手。请用中文（简体）解释以下 Solidity 函数，面向 Web3 初学者（产品经理背景）。
+
+函数签名：
+${sig}
+
+合约背景（SimpleCounter）：
+${SAMPLE_SOL}
+
+请回答以下几点（用自然语言，不要用代码块）：
+1. 这个函数的作用是什么？
+2. 谁可以调用它？有权限限制吗？
+3. 会消耗 Gas（需要钱包确认）吗？为什么？
+4. 它会改变链上状态还是只读取数据？
+5. 实际使用场景是什么？（结合 SimpleCounter 的业务逻辑）
+
+回答简洁、口语化，每点 1-2 句话。`;
+    const text = await callAI([{role:'user',content:prompt}]);
+    body.innerHTML=`<div class="explain-text">${text.replace(/</g,'&lt;')}</div>`;
+  }catch(e){
+    body.innerHTML=`<div class="error-msg">❌ ${e.message}</div><div style="margin-top:.5rem;font-size:.8rem;color:var(--muted)">请检查 API Key 是否正确，或网络是否可访问 api.openai.com</div>`;
+  }
+}
+
+async function genQuiz(){
+  if(!currentABI.length){ alert('请先解析 ABI'); return; }
+  const right = document.getElementById('right');
+  const quizCard = document.getElementById('quiz-card');
+  if(!quizCard){
+    right.innerHTML=`<div class="card"><div class="card-title"><div class="dot" style="background:var(--yellow)"></div>知识 Quiz</div><div id="quiz-body"><span class="loader"></span>正在生成题目…</div></div>`;
+  } else {
+    quizCard.style.display='block';
+    document.getElementById('quiz-body').innerHTML='<span class="loader"></span>正在生成题目…';
+  }
+  try{
+    const fns = currentABI.filter(i=>i.type==='function').map(i=>buildSig(i)).join('\n');
+    const prompt = `基于以下 Solidity 合约函数，生成 3 道选择题（JSON 数组），帮助 Web3 初学者理解合约。
+
+函数列表：
+${fns}
+
+合约：SimpleCounter（计数器合约，owner 才能 reset，任何人可 increment）
+
+要求：
+- 每题 4 个选项（a/b/c/d），只有 1 个正确
+- 题目考察：Gas 消耗、权限控制、状态可变性、事件触发等概念
+- 用中文出题
+- 返回 JSON，格式：
+[{"q":"题目","opts":["a...","b...","c...","d..."],"ans":0,"explain":"解析"}]
+ans 是正确选项的索引（0-3）。只返回 JSON，不要其他文字。`;
+    const text = await callAI([{role:'user',content:prompt}]);
+    const cleaned = text.replace(/```json?/g,'').replace(/```/g,'').trim();
+    quizData = JSON.parse(cleaned);
+    renderQuiz();
+  }catch(e){
+    const qb = document.getElementById('quiz-body');
+    if(qb) qb.innerHTML=`<div class="error-msg">❌ Quiz 生成失败：${e.message}</div>`;
+  }
+}
+
+function renderQuiz(){
+  const qb = document.getElementById('quiz-body');
+  if(!qb) return;
+  let html=`<div class="score-bar"><span class="score-num" id="score-num">0</span>/<span>${quizData.length}</span><span style="color:var(--muted);font-size:.8rem;margin-left:.5rem">题答对</span><button class="btn btn-ghost" style="margin-left:auto;font-size:.75rem" onclick="genQuiz()">重新生成</button></div>`;
+  quizData.forEach((q,qi)=>{
+    html+=`<div class="quiz-q" id="quiz-q-${qi}" style="margin-top:1rem"><p>${qi+1}. ${q.q}</p><div class="quiz-opts">`;
+    q.opts.forEach((opt,oi)=>{
+      html+=`<button class="quiz-opt" id="opt-${qi}-${oi}" onclick="checkAns(${qi},${oi})">${opt}</button>`;
+    });
+    html+=`</div><div class="quiz-explain" id="qex-${qi}" style="display:none">${q.explain}</div></div>`;
+  });
+  qb.innerHTML=html;
+}
+
+let answered = new Set();
+let score = 0;
+function checkAns(qi,oi){
+  if(answered.has(qi)) return;
+  answered.add(qi);
+  const q = quizData[qi];
+  const opts = document.querySelectorAll(`#quiz-q-${qi} .quiz-opt`);
+  opts.forEach((btn,i)=>{
+    btn.disabled=true;
+    if(i===q.ans) btn.classList.add('correct');
+    else if(i===oi) btn.classList.add('wrong');
+  });
+  if(oi===q.ans){ score++; document.getElementById('score-num').textContent=score; }
+  document.getElementById('qex-'+qi).style.display='block';
+}
+
+// Init
+window.onload=()=>{
+  const k = sessionStorage.getItem('oai_key');
+  if(k){ document.getElementById('api-key').value=k; document.getElementById('key-status').textContent='✓ Key 已从会话恢复'; }
+};
+</script>
+</body>
+</html>
