@@ -15,8 +15,7 @@
 > 为防止 Agent 陷入死循环或恶意超支，Alice 使用 **Cobo CAW (Cobo Agentic Wallet)** 部署了一个 **Pact 协议**。
 > 该 Pact 规定：限制该 Agent 的每日预算为 5 USDC，限调用 DappRadar 合约/收款地址，限期 7 天，超时或超支自动终止。
 
-### 架构图 (System Architecture)
-
+### 架构图 
 ```mermaid
 graph TD
     User[Alice / User] -- 1. 部署 Pact / 授权预算 --> CAW[Cobo CAW & Pact Engine]
@@ -33,7 +32,7 @@ graph TD
 
 ---
 
-## 2. Pact 协议定义 (Cobo CAW & Pact Configuration)
+## 2. Pact 协议定义 
 
 Alice 为 Agent 创建的 **Pact (Human-Agent Authorization Contract)** 定义如下。该配置在 Cobo 协同签名节点与智能合约层面共同校验。
 
@@ -70,7 +69,7 @@ pact:
 
 ---
 
-## 3. x402 API 服务端设计 (Paywall Server)
+## 3. x402 API 服务端设计 
 
 服务商部署的 Express 风格中间件。用于识别未付款请求，返回 `HTTP 402` 并指引支付；在收到支付证明后放行请求。
 
@@ -152,7 +151,7 @@ module.exports = x402Paywall;
 
 ---
 
-## 4. Agent 消费方自主支付逻辑 (Agent Loop)
+## 4. Agent 消费方自主支付逻辑
 
 Agent 运行的主逻辑。包含**检测 402**、**请求 CAW 签名**、**获取凭证并成功调用**的全流程。
 
@@ -271,6 +270,5 @@ AI Agent 自动操纵资产是把双刃剑，必须在架构设计层面做出�
     - 每一笔付款都对应唯一的 `tx_hash`，其中打包了 transaction inputs (对应 DappRadar 产生的 task_id/quote_id 哈希)。
     - DappRadar 必须在交付时返回一份由服务器私钥签名的 Receipt 并在 IPFS 存档。
 
----
 
-*本方案实现了 x402 提供的 HTTP-native frictionless 付款接口与 Cobo CAW/Pact 提供的强力安全预算防火墙的结合，是目前 Agentic Commerce 最为安全的落地形态之一。*
+
