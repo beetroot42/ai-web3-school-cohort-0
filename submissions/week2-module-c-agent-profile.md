@@ -7,7 +7,7 @@
 
 ---
 
-## 一、选定 Agent：链析 Agent（Chain Analyzer Agent）
+## 一、选定 Agent：链析 Agent
 
 > 延续 Week 2 主线方向（Identity / Reputation），选取 Module B 场景中设计过的「链析 Agent」，
 > 本次从 identity、capability、协作关系、失败处理等维度做完整 profile 拆解。
@@ -16,7 +16,7 @@
 
 ## 二、Agent Identity 拆解
 
-### 2.1 它是谁（Who）
+### 2.1 它是谁
 
 | 字段 | 内容 |
 |------|------|
@@ -29,8 +29,7 @@
 
 ---
 
-### 2.2 由谁维护（Owner & Operator）
-
+### 2.2 由谁维护
 | 角色 | 地址 / 说明 |
 |------|------------|
 | **Owner** | `0xBeetroot42MultiSig...`（3/5 多签，控制身份更新和收款地址变更）|
@@ -41,14 +40,14 @@
 
 ---
 
-### 2.3 能力清单（Capabilities）
+### 2.3 能力清单
 
-#### Capability 1：合约风险分析（Contract Risk Analysis）
+#### Capability 1：合约风险分析
 
 | 维度 | 内容 |
 |------|------|
 | **描述** | 分析智能合约的管理员权限、可升级性、外部依赖和历史漏洞模式 |
-| **风险等级** | 🟡 中风险（只读，不执行链上写操作）|
+| **风险等级** | 中风险（只读，不执行链上写操作）|
 | **输入** | `{ "contract_address": "0x...", "chain_id": 1 }` |
 | **输出** | `{ "risk_score": 0-100, "admin_key_risks": [...], "upgradeability": "proxy/immutable", "known_vulnerabilities": [...] }` |
 | **价格** | `3 USDC / 次` |
@@ -56,12 +55,11 @@
 | **失败退款** | 超时或异常自动退款，链上 Escrow 状态变 `Rejected` |
 | **权限要求** | 无需钱包签名，只读 RPC 调用 |
 
-#### Capability 2：资金流向追踪（Fund Flow Tracing）
-
+#### Capability 2：资金流向追踪
 | 维度 | 内容 |
 |------|------|
 | **描述** | 追踪目标地址过去 N 天内的资金流入/流出，标记混币器、可疑地址和异常转账 |
-| **风险等级** | 🟡 中风险（只读）|
+| **风险等级** | 中风险（只读）|
 | **输入** | `{ "address": "0x...", "chain_id": 1, "days": 30 }` |
 | **输出** | `{ "total_in": "...", "total_out": "...", "flagged_counterparties": [...], "flow_graph_ipfs_cid": "Qm..." }` |
 | **价格** | `2 USDC / 次`（30 天数据），超过 90 天 `+1 USDC` |
@@ -69,12 +67,11 @@
 | **数据来源** | The Graph 子图 + Etherscan API（x402 付费调用）|
 | **权限要求** | 无需钱包签名 |
 
-#### Capability 3：完整尽调报告（Full DD Report）
-
+#### Capability 3：完整尽调报告
 | 维度 | 内容 |
 |------|------|
 | **描述** | 组合 Capability 1 + 2 + 代币经济分析，生成结构化 PDF + JSON 报告 |
-| **风险等级** | 🟡 中风险（只读 + 付费子调用）|
+| **风险等级** | 中风险（只读 + 付费子调用）|
 | **输入** | `{ "target_protocol": "0x...", "chain_id": 1, "required_fields": [...], "format": "pdf+json" }` |
 | **输出** | `{ "report_ipfs_cid": "Qm...", "report_hash": "0x...", "json_summary": {...} }` |
 | **价格** | `10 USDC / 次` |
@@ -84,8 +81,7 @@
 
 ---
 
-### 2.4 如何被调用（Invocation）
-
+### 2.4 如何被调用
 ```
 调用流程（以 Full DD Report 为例）：
 
@@ -136,7 +132,7 @@
 
 ---
 
-### 2.5 如何收费（Pricing & Payment）
+### 2.5 如何收费
 
 | 收费项 | 金额 | 结算方式 |
 |--------|------|---------|
@@ -154,8 +150,7 @@
 
 ---
 
-### 2.6 如何被验证（Verification）
-
+### 2.6 如何被验证
 **三层验证体系**：
 
 ```
@@ -186,7 +181,7 @@
 
 ---
 
-### 2.7 协作对象（Collaborators）
+### 2.7 协作对象
 
 ```
 链析 Agent 的协作网络：
@@ -215,8 +210,7 @@
 
 ---
 
-### 2.8 失败点与处理（Failure Modes）
-
+### 2.8 失败点与处理
 | 失败场景 | 概率 | 影响 | 处理机制 |
 |----------|------|------|---------|
 | The Graph API 不可用 | 低 | 任务无法完成 | 自动降级：切换 Etherscan 直查；超时触发 `claimRefund()` |
