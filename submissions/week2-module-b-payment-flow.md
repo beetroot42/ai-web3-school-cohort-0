@@ -56,7 +56,7 @@ Alice 的 Smart Account 配置：
 
 ---
 
-### 阶段 1：报价（Quote）
+### 阶段 1：报价
 
 **触发**：Alice 的 AI 助手发现链析 Agent 可以完成此任务。
 
@@ -87,7 +87,7 @@ Alice Assistant → 调用链析 Agent 的 A2A 端点
 
 ---
 
-### 阶段 2：预算授权（Budget Authorization / Payment Intent）
+### 阶段 2：预算授权
 
 **触发**：Alice 确认报价。
 
@@ -138,7 +138,7 @@ fund(jobId, 10 USDC)
 
 ---
 
-### 阶段 3：执行（Execution）
+### 阶段 3：执行
 
 **触发**：Escrow 合约状态变为 Funded，链析 Agent 监听到事件。
 
@@ -159,7 +159,7 @@ fund(jobId, 10 USDC)
 
 ---
 
-### 阶段 4：交付（Delivery）
+### 阶段 4：交付
 
 **触发**：链析 Agent 完成报告，发起 submit。
 
@@ -192,7 +192,7 @@ submit(
 
 ---
 
-### 阶段 5：验收（Acceptance）
+### 阶段 5：验收
 
 **Evaluator 合约自动检查**（`0xEval...`）：
 
@@ -216,7 +216,7 @@ Alice 在 10 分钟内未发起挑战
 
 ---
 
-### 阶段 6：付款（Payment）
+### 阶段 6：付款
 
 **触发**：Evaluator 调用 complete()。
 
@@ -257,7 +257,7 @@ Alice 的 Smart Account 调用 giveFeedback：
 
 ---
 
-### 阶段 6A（分支）：退款（Refund）
+### 阶段 6A（分支）：退款
 
 **触发条件**：
 - 超过截止时间（`block.timestamp >= expiredAt`）但未提交
@@ -279,7 +279,7 @@ Alice 的 Smart Account 调用 giveFeedback：
 
 ---
 
-### 阶段 6B（分支）：争议（Dispute）
+### 阶段 6B（分支）：争议
 
 **触发条件**：Alice 认为报告质量不达标（主观判断），在挑战窗口内提出异议。
 
@@ -306,7 +306,7 @@ Alice 的 Smart Account 调用 giveFeedback：
 
 ---
 
-### 阶段 7：记录证明（Record & Proof）
+### 阶段 7：记录证明
 
 所有关键操作均有链上痕迹：
 
@@ -510,8 +510,3 @@ Agent（Python + Web3.py）：
 3. **x402 + ERC-8183 是互补的**：前者解决了"如何触发支付"，后者解决了"支付的条件和时机"。单独使用任何一个都不完整。
 4. **Receipt 不只是收据**：它是声誉系统的输入、争议系统的证据、审计系统的基础。
 
----
-
-*本文件作为 Week 2 Module B 打卡产出，后续 Proposal 将基于此流程设计链析 Agent 的最小可演示原型。*
-
-**GitHub**：https://github.com/beetroot42/ai-web3-school-cohort-0/blob/main/submissions/week2-module-b-payment-flow.md
