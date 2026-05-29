@@ -1,7 +1,7 @@
 # Week 2 Module A — AI × Web3 问题地图
 
 **作者**：beetroot42  
-**日期**：2026-05-29  
+**日期**：2026-05-22  
 **来源**：[AI × Web3 School Handbook](https://aiweb3.school/zh/handbook/)  
 **仓库**：https://github.com/beetroot42/ai-web3-school-cohort-0
 
@@ -94,7 +94,7 @@ Agent → 调用酒店 API（付费）→ 比价 → 选定 → 从 Session Key 
 给 Agent 一个钱包私钥，等于给它无限授权。如何设计"最小授权"使得 Agent 能自主操作，同时人类随时可以撤销？
 
 ### AI 的作用
-- **意图解析**：把"帮我买一些 ETH"解析成具体交易参数，而不是直接执行任意 calldata
+- **意图解析**：把"帮我买一些 ETH解析成具体交易参数，而不是直接执行任意 calldata
 - **风险评估**：在签名前模拟交易，检测异常（转账金额超出预期、目标地址黑名单）
 - **Human-in-the-loop 判断**：根据风险等级，决定是静默执行还是唤醒用户确认
 - **执行监控**：实时监控 Agent 行为，发现偏离任务的操作立即暂停
@@ -235,7 +235,7 @@ Agent →
 AI 可以生成能力描述、从历史对话推断可信度，但这些判断：
 - **无法抗篡改**：平台数据库里的声誉记录可以被平台修改或删除
 - **无法跨平台迁移**：在 ChatGPT 上的对话记录，无法带到另一个服务使用
-- **无法被第三方验证**：没有独立机构可以证明"这个 Agent 真的完成了 2,000 次任务"
+- **无法被第三方验证**：没有独立机构可以证明这个 Agent 真的完成了 2,000 次任务
 
 AI 解决的是"理解和生成"问题，但解决不了"谁来背书、怎么让陌生人相信"的问题。
 
@@ -324,33 +324,32 @@ Week 2 主线：Agent Identity & Reputation
 ```
 AI × Web3 问题地图
 │
-├── 💳 Payment / Commerce / Settlement
+├── Payment / Commerce / Settlement
 │   AI：意图解析、报价协商、工作流编排
 │   Web3：Session Key、托管合约、链上收据
 │
-├── 🪪 Identity / Reputation / Capability ◀── 【Week 2 主线】
+├── Identity / Reputation / Capability ◀── 【Week 2 主线】
 │   AI：能力描述、声誉推断、跨协议翻译
 │   Web3：DID、VC、链上行为记录
 │
-├── 🔐 Wallet / Permission / Safe Execution
+├── Wallet / Permission / Safe Execution
 │   AI：意图解析、风险评估、Human-in-the-loop 判断
 │   Web3：Account Abstraction、Session Key、Policy Guard
 │
-├── 🔒 Privacy / Security / Sovereignty
+├── Privacy / Security / Sovereignty
 │   AI：本地推理、Prompt Injection 防御、审计分析
 │   Web3：ZK 证明、链上审计日志、主权数据存储
 │
-├── 🛠️ Dev Tooling / Agent Workflow
+├── Dev Tooling / Agent Workflow
 │   AI：合约理解、测试生成、代码审查、流水线编排
 │   Web3：链上状态作为上下文、交易模拟、MCP 工具链
 │
-└── 🗳️ Governance / Coordination / Public Goods
+└── Governance / Coordination / Public Goods
     AI：提案摘要、多方观点、预算追踪、协调建议
     Web3：链上提案存档、投票权重机制、DAO 执行层
 ```
 
 ---
 
-*本文件作为 Week 2 Module A 打卡产出，后续 proposal 和拆解围绕「Identity / Reputation」方向推进。*
 
 **GitHub**：https://github.com/beetroot42/ai-web3-school-cohort-0/blob/main/submissions/week2-module-a-problem-map.md
